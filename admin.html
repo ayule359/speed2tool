@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>管理后台 - QQ飞车小工具</title>
+    <meta name="description" content="QQ飞车小工具内容管理后台：卡片、地图池、标题与密码设置">
+    <link rel="icon" href="assets/favicon.png">
+    <style>
+        * {margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif;}
+        body {
+            background: url("assets/hou/bj.jpg") no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+            min-height: 100vh;
+            padding: 24px;
+        }
+        .wrap {max-width: 1080px;margin: 0 auto;}
+        /* 登录页 */
+        .login-card {
+            max-width: 380px;
+            margin: 12vh auto;
+            background: rgba(255,255,255,0.94);
+            border: 1px solid #B3E0FF;
+            border-radius: 16px;
+            padding: 36px 32px;
+            text-align: center;
+            color: #222;
+            backdrop-filter: blur(6px);
+        }
+        .login-card h1 {font-size: 22px;color: #1377EB;margin-bottom: 22px;}
+        .login-card input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #B3E0FF;
+            font-size: 16px;
+            margin-bottom: 14px;
+        }
+        .login-card button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #13C2F2;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .login-card button:hover {background: #0EA8E0;}
+        /* 顶栏 */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .topbar h1 {font-size: 26px;color: #E6F7FF;text-shadow: 0 2px 10px rgba(0,100,200,0.3);}
+        .topbar .btns {display: flex;gap: 8px;flex-wrap: wrap;}
+        .topbar a, .topbar button {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+            color: #fff;
+            background: #1377EB;
+            transition: 0.2s;
+        }
+        .topbar a:hover, .topbar button:hover {background: #0D5FC5;}
+        .topbar .ghost {background: rgba(255,255,255,0.18);border: 1px solid rgba(255,255,255,0.35);}
+        /* 保存全部修改 - 高亮 */
+        #saveAll {
+            background: linear-gradient(135deg, #13C2F2, #1377EB);
+            border: 1px solid rgba(255,255,255,0.55);
+            box-shadow: 0 0 12px rgba(19,194,242,0.75), 0 2px 10px rgba(0,0,0,0.2);
+            font-weight: bold;
+            letter-spacing: 1px;
+            padding: 9px 22px;
+            animation: savePulse 2s ease-in-out infinite;
+        }
+        #saveAll:hover {
+            background: linear-gradient(135deg, #0EA8E0, #0D5FC5);
+            box-shadow: 0 0 18px rgba(19,194,242,0.95), 0 3px 14px rgba(0,0,0,0.3);
+            transform: translateY(-1px);
+        }
+        @keyframes savePulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(19,194,242,0.55), 0 2px 8px rgba(0,0,0,0.18); }
+            50% { box-shadow: 0 0 24px rgba(19,194,242,0.95), 0 2px 12px rgba(0,0,0,0.25); }
+        }
+        /* 标签页 */
+        .tabs {display: flex;gap: 8px;margin-bottom: 16px;}
+        .tab {
+            padding: 9px 22px;
+            border-radius: 24px;
+            border: 1px solid #13C2F2;
+            background: rgba(255,255,255,0.08);
+            color: #E6F7FF;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .tab.active {background: #13C2F2;color: #fff;}
+        .panel {display: none;}
+        .panel.active {display: block;}
+        /* 面板卡片 */
+        .card-panel {
+            background: rgba(255,255,255,0.94);
+            border: 1px solid #B3E0FF;
+            border-radius: 14px;
+            padding: 20px;
+            color: #222;
+            margin-bottom: 16px;
+            backdrop-filter: blur(6px);
+        }
+        .card-panel h2 {font-size: 16px;color: #1377EB;margin-bottom: 14px;}
+        .hint {font-size: 12px;color: #888;margin-bottom: 12px;line-height: 1.6;}
+        /* 卡片编辑行 */
+        .cfg-row {
+            padding: 14px 16px;
+            border: 1px solid #D6EDFF;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            background: #F7FCFF;
+            box-shadow: 0 1px 4px rgba(19,119,235,0.08);
+        }
+        .cfg-row.hidden-card {opacity: 0.5;}
+        .cfg-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .cfg-top .f-name {flex: 1.2;min-width: 170px;}
+        .cfg-top .f-icon {flex: 0 0 92px;}
+        .f-field {display: block;margin-top: 10px;}
+        .cfg-top .f-field {margin-top: 0;}
+        .f-field label {
+            display: block;font-size: 11px;color: #8a8a8a;margin-bottom: 4px;
+            font-weight: bold;letter-spacing: 0.5px;
+        }
+        .f-field input[type="text"], .f-field input[type="password"], .f-field textarea {
+            width: 100%;padding: 8px 10px;border-radius: 6px;border: 1px solid #B3E0FF;
+            font-size: 14px;background: #fff;color: #333;
+        }
+        .f-field textarea {
+            min-height: 54px;resize: vertical;font-family: "Microsoft Yahei",sans-serif;font-size: 13px;
+        }
+        .cfg-row .vis {display: flex;align-items: center;gap: 5px;font-size: 13px;cursor: pointer;white-space: nowrap;}
+        .cfg-row .vis input[type="checkbox"] {width: 16px;height: 16px;accent-color: #13C2F2;}
+        .cfg-row .type-tag {
+            font-size: 11px;color: #13C2F2;background: #E6F7FF;
+            border-radius: 10px;padding: 4px 10px;white-space: nowrap;
+        }
+        /* 地图行 */
+        .map-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border: 1px solid #E6F7FF;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            background: #F7FCFF;
+            font-size: 14px;
+        }
+        .map-row .m-name {flex: 1;color: #1377EB;font-weight: bold;}
+        .map-row label {display: flex;align-items: center;gap: 4px;font-size: 12px;color: #555;cursor: pointer;}
+        .map-row input[type="checkbox"] {width: 15px;height: 15px;accent-color: #13C2F2;}
+        .map-row .m-del {background: #ff4d4f;color: #fff;border: none;border-radius: 6px;padding: 4px 10px;font-size: 12px;cursor: pointer;}
+        .map-row .m-del:hover {background: #e0393b;}
+        .map-list {max-height: 420px;overflow-y: auto;padding-right: 4px;}
+        .add-map {display: flex;gap: 8px;flex-wrap: wrap;margin-bottom: 14px;}
+        .add-map input {padding: 8px 10px;border-radius: 6px;border: 1px solid #B3E0FF;font-size: 14px;flex: 1;min-width: 120px;}
+        .add-map button {padding: 8px 18px;border-radius: 6px;border: none;background: #13C2F2;color: #fff;font-size: 14px;cursor: pointer;}
+        .add-map button:hover {background: #0EA8E0;}
+        .map-search {display: flex;gap: 8px;margin-bottom: 12px;}
+        .map-search input {
+            flex: 1;padding: 8px 12px;border-radius: 6px;border: 1px solid #B3E0FF;
+            font-size: 14px;background: #fff;color: #333;
+        }
+        .map-search button {padding: 8px 16px;border-radius: 6px;border: none;background: #8c8c8c;color: #fff;font-size: 13px;cursor: pointer;}
+        .map-search button:hover {background: #737373;}
+        #mapSearchCount {color: #1377EB;font-weight: bold;}
+        .count-link {
+            cursor: pointer;
+            color: #1377EB;
+            font-weight: bold;
+            border-radius: 8px;
+            padding: 2px 7px;
+            transition: background .15s, color .15s;
+        }
+        .count-link:hover { background: #E3F4FF; }
+        .count-link.active { background: #13C2F2; color: #fff; }
+        /* 设置 */
+        .set-row {display: flex;align-items: center;gap: 10px;margin-bottom: 12px;font-size: 14px;}
+        .set-row label {width: 90px;color: #555;flex-shrink: 0;}
+        .set-row input {flex: 1;padding: 8px 10px;border-radius: 6px;border: 1px solid #B3E0FF;font-size: 14px;max-width: 420px;}
+        .data-btns {display: flex;gap: 10px;flex-wrap: wrap;margin-top: 6px;}
+        .data-btns button {padding: 9px 20px;border-radius: 8px;border: none;font-size: 14px;cursor: pointer;color: #fff;transition: 0.2s;}
+        .btn-blue {background: #1377EB;}
+        .btn-blue:hover {background: #0D5FC5;}
+        .btn-cyan {background: #13C2F2;}
+        .btn-cyan:hover {background: #0EA8E0;}
+        .btn-red {background: #ff4d4f;}
+        .btn-red:hover {background: #e0393b;}
+        .btn-gray {background: #8c8c8c;}
+        .btn-gray:hover {background: #737373;}
+        /* Toast */
+        .toast {
+            position: fixed;top: 50%;left: 50%;
+            transform: translate(-50%,-50%) scale(0.8);
+            background: rgba(19,119,235,0.95);color: #fff;
+            padding: 16px 32px;border-radius: 12px;font-size: 16px;font-weight: bold;
+            z-index: 9999;pointer-events: none;opacity: 0;
+            transition: opacity 0.25s, transform 0.25s;
+            box-shadow: 0 8px 40px rgba(19,119,235,0.5);
+        }
+        .toast.show {opacity: 1;transform: translate(-50%,-50%) scale(1);}
+        .toast.warn {background: rgba(224,32,32,0.95);}
+        /* 确认弹窗 */
+        .modal-overlay {
+            position: fixed;inset: 0;background: rgba(0,0,0,0.45);z-index: 9998;
+            display: flex;align-items: center;justify-content: center;
+            opacity: 0;pointer-events: none;transition: opacity 0.25s;
+        }
+        .modal-overlay.show {opacity: 1;pointer-events: auto;}
+        .modal-box {
+            background: #fff;border-radius: 14px;padding: 26px 28px 18px;width: 340px;
+            text-align: center;box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+            transform: scale(0.9);transition: transform 0.25s;color: #333;
+        }
+        .modal-overlay.show .modal-box {transform: scale(1);}
+        .modal-body {font-size: 15px;margin-bottom: 20px;line-height: 1.6;}
+        .modal-btns {display: flex;gap: 12px;}
+        .modal-btn {flex: 1;padding: 9px;border-radius: 8px;border: none;font-size: 14px;cursor: pointer;}
+        .modal-btn.cancel {background: #f0f0f0;color: #666;}
+        .modal-btn.confirm {background: #13C2F2;color: #fff;}
+        .admin-hidden {display: none !important;}
+        @media (max-width: 768px) {
+            body {padding: 12px;}
+            .topbar h1 {font-size: 20px;}
+            .cfg-row {padding: 12px;}
+            .add-map input {min-width: 100%;}
+            .set-row {flex-wrap: wrap;}
+            .set-row label {width: 100%;}
+            .set-row input {max-width: none;}
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <!-- 登录 -->
+        <div id="loginView">
+            <div class="login-card">
+                <h1>⚙ 管理后台登录</h1>
+                <input type="password" id="loginPwd" placeholder="请输入管理员密码">
+                <button id="loginBtn">登 录</button>
+            </div>
+        </div>
+
+        <!-- 管理界面 -->
+        <div id="adminView" class="admin-hidden">
+            <div class="topbar">
+                <h1>⚙ QQ飞车小工具 · 管理后台</h1>
+                <div class="btns">
+                    <a href="index.html" class="ghost">返回工具</a>
+                    <button id="saveAll" class="ghost">保存全部修改</button>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" data-tab="cards">卡片管理</div>
+                <div class="tab" data-tab="maps">地图池</div>
+                <div class="tab" data-tab="settings">设置与数据</div>
+            </div>
+
+            <!-- 卡片管理 -->
+            <div class="panel active" id="panel-cards">
+                <div class="card-panel">
+                    <h2>功能卡片内容</h2>
+                    <div class="hint">管理首页 4 个功能卡片：名称、图标（可填 emoji）、描述（换行自动变成换行）、跳转链接；取消勾选「显示」可隐藏该卡片。</div>
+                    <div id="cardList"></div>
+                    <button class="btn-cyan" id="saveCards" style="padding:9px 20px;border:none;border-radius:8px;font-size:14px;color:#fff;cursor:pointer;">保存卡片修改</button>
+                </div>
+            </div>
+
+            <!-- 地图池 -->
+            <div class="panel" id="panel-maps">
+                <div class="card-panel">
+                    <h2>地图池管理</h2>
+                    <div class="hint">
+                        管理全部/车王地图/钻石排位/大师排位四组地图。勾选「车王地图」「钻石排位」「大师排位」决定该地图进入对应池；「全部地图」包含以下所有地图。<br>
+                        新增地图：图片需放在 <b>assets/tu/</b> 目录并命名为 <b>地图名.jpg</b>，或填写一张完整图片链接（http…），两者填一个即可。
+                    </div>
+                    <div class="add-map">
+                        <input id="newMapName" placeholder="地图名称（必填）">
+                        <input id="newMapImg" placeholder="图片链接（可选，留空用 assets/tu/地图名.jpg）">
+                        <button id="addMapBtn">添加地图</button>
+                    </div>
+                    <div class="map-search">
+                        <input id="mapSearch" type="text" placeholder="搜索已添加的地图名称…">
+                        <button id="mapSearchClear">清空</button>
+                    </div>
+                    <div class="map-list" id="mapList"></div>
+                    <div class="hint" style="margin-top:10px;">地图数量：<span class="count-link" data-pool="all" title="点击显示全部地图">全部 <span id="mapCountAll">0</span></span> ｜ <span class="count-link" data-pool="match" title="点击只看车王地图">车王地图 <span id="mapCountMatch">0</span></span> ｜ <span class="count-link" data-pool="rank" title="点击只看钻石排位">钻石排位 <span id="mapCountRank">0</span></span> ｜ <span class="count-link" data-pool="master" title="点击只看大师排位">大师排位 <span id="mapCountMaster">0</span></span><span id="mapSearchCount"></span></div>
+                </div>
+            </div>
+
+            <!-- 设置与数据 -->
+            <div class="panel" id="panel-settings">
+                <div class="card-panel">
+                    <h2>基本设置</h2>
+                    <div class="set-row"><label>首页标题</label><input id="setTitle" placeholder="首页大标题"></div>
+                    <div class="set-row"><label>修改密码</label><input id="setPwd" type="password" placeholder="留空则不修改密码"></div>
+                    <button class="btn-blue" id="saveSettings" style="padding:9px 20px;border:none;border-radius:8px;font-size:14px;color:#fff;cursor:pointer;">保存设置</button>
+                </div>
+                <div class="card-panel">
+                    <h2>作者信息</h2>
+                    <div class="set-row"><label>QQ 号码</label><input id="setAuthorQQ" placeholder="用于显示联系方式 & 自动加载 QQ 头像"></div>
+                    <div class="set-row"><label>作者昵称</label><input id="setAuthorName" placeholder="显示在头像旁边的名字"></div>
+                    <div class="set-row"><label>作者说明</label><textarea id="setAuthorDesc" rows="3" placeholder="一句话介绍，如：个人兴趣制作，仅供娱乐" style="width:100%;padding:8px;border:1px solid #d0d7e5;border-radius:8px;font-size:14px;box-sizing:border-box;"></textarea></div>
+                    <div class="hint" style="margin-top:8px;">头像将自动从 QQ 头像服务加载；QQ 号留空则不显示作者卡片。</div>
+                    <button class="btn-blue" id="saveAuthor" style="padding:9px 20px;border:none;border-radius:8px;font-size:14px;color:#fff;cursor:pointer;margin-top:10px;">保存作者信息</button>
+                </div>
+                <div class="card-panel">
+                    <h2>数据管理</h2>
+                    <div class="hint">配置保存在本机浏览器 localStorage 中，与主页面实时同步。可导出为文件备份，或导入备份恢复。</div>
+                    <div class="data-btns">
+                        <button class="btn-blue" id="exportCfg">导出配置 JSON</button>
+                        <button class="btn-cyan" id="importBtn">导入配置 JSON</button>
+                        <input type="file" id="importFile" accept=".json" style="display:none;">
+                        <button class="btn-red" id="resetCfg">恢复默认配置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-btns">
+                <button class="modal-btn cancel" id="modalCancel">取消</button>
+                <button class="modal-btn confirm" id="modalConfirm">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+    // ========== 工具函数 ==========
+    const CFG_KEY = 'qqspeed_tool_cfg_v1';
+    const SESSION_KEY = 'qqspeed_admin_login';
+    function deepMerge(base, over) {
+        if (over === undefined || over === null) return base;
+        if (Array.isArray(base) || Array.isArray(over)) return Array.isArray(over) ? over.slice() : base.slice();
+        if (typeof base === 'object' && typeof over === 'object') {
+            const out = Object.assign({}, base);
+            for (const k of Object.keys(over)) {
+                if (over[k] !== undefined) out[k] = deepMerge(base[k], over[k]);
+            }
+            return out;
+        }
+        return over;
+    }
+    function loadCfg() {
+        const base = JSON.parse(JSON.stringify(window.QQS_DEFAULT_CFG || {}));
+        try {
+            const raw = localStorage.getItem(CFG_KEY);
+            if (raw) return deepMerge(base, JSON.parse(raw));
+        } catch (e) {}
+        return base;
+    }
+    function escHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    let CFG = loadCfg();
+
+    // ========== Toast & 确认弹窗 ==========
+    const toast = document.getElementById('toast');
+    let toastTimer = null;
+    function showToast(msg, warn) {
+        toast.textContent = msg;
+        toast.classList.toggle('warn', !!warn);
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalBody = document.getElementById('modalBody');
+    const modalCancel = document.getElementById('modalCancel');
+    const modalConfirm = document.getElementById('modalConfirm');
+    modalCancel.onclick = () => modalOverlay.classList.remove('show');
+    modalConfirm.onclick = () => modalOverlay.classList.remove('show');
+    function showConfirm(msg) {
+        return new Promise(resolve => {
+            modalBody.textContent = msg;
+            modalOverlay.classList.add('show');
+            modalConfirm.onclick = () => { modalOverlay.classList.remove('show'); resolve(true); };
+            modalCancel.onclick = () => { modalOverlay.classList.remove('show'); resolve(false); };
+        });
+    }
+
+    // ========== 登录 ==========
+    const loginView = document.getElementById('loginView');
+    const adminView = document.getElementById('adminView');
+    function doLogin() {
+        const pwd = document.getElementById('loginPwd').value;
+        if (pwd === String(CFG.adminPassword || '')) {
+            sessionStorage.setItem(SESSION_KEY, '1');
+            loginView.classList.add('admin-hidden');
+            adminView.classList.remove('admin-hidden');
+            renderAll();
+            showToast('登录成功');
+        } else {
+            showToast('密码错误，请重试', true);
+        }
+    }
+    document.getElementById('loginBtn').onclick = doLogin;
+    document.getElementById('loginPwd').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+    // ========== 标签切换 ==========
+    document.querySelectorAll('.tab').forEach(t => {
+        t.onclick = () => {
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+            t.classList.add('active');
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+        };
+    });
+
+    // ========== 卡片管理 ==========
+    function renderCards() {
+        const box = document.getElementById('cardList');
+        box.innerHTML = '';
+        (CFG.cards || []).forEach(c => {
+            const typeTag = c.type === 'mode' ? '模式入口' : '链接跳转';
+            const row = document.createElement('div');
+            row.className = 'cfg-row';
+            row.dataset.key = c.key || '';
+            row.dataset.type = c.type || 'link';
+            row.dataset.mode = c.mode || '';
+            const visible = c.visible !== false;
+            if (!visible) row.classList.add('hidden-card');
+            row.innerHTML = `
+                <div class="cfg-top">
+                    <label class="vis"><input type="checkbox" class="c-vis" ${visible ? 'checked' : ''}> 显示</label>
+                    <div class="f-field f-name"><label>名称</label><input type="text" class="c-name" value="${escHtml(c.name || '')}" placeholder="卡片名称"></div>
+                    <div class="f-field f-icon"><label>图标</label><input type="text" class="c-icon" value="${escHtml(c.icon || '')}" placeholder="如 🩸"></div>
+                    <div class="type-tag">${typeTag}</div>
+                </div>
+                <div class="f-field"><label>描述（换行自动变成换行）</label><textarea class="c-desc">${escHtml(c.desc || '')}</textarea></div>
+                <div class="f-field"><label>跳转链接（模式入口留空）</label><input type="text" class="c-link" value="${escHtml(c.link || '')}" placeholder="https://..."></div>`;
+            box.appendChild(row);
+            // 取消「显示」时整行变淡，便于看出哪些卡片已隐藏
+            row.querySelector('.c-vis').addEventListener('change', e => {
+                row.classList.toggle('hidden-card', !e.target.checked);
+            });
+        });
+    }
+
+    // ========== 地图池 ==========
+    // 确保 CFG.maps 结构存在，防止配置损坏时报错
+    function ensureMaps() {
+        if (!CFG.maps || typeof CFG.maps !== 'object') CFG.maps = {};
+        CFG.maps.all   = Array.isArray(CFG.maps.all)   ? CFG.maps.all   : [];
+        CFG.maps.rank  = Array.isArray(CFG.maps.rank)  ? CFG.maps.rank  : [];
+        CFG.maps.match = Array.isArray(CFG.maps.match) ? CFG.maps.match : [];
+        CFG.maps.master = Array.isArray(CFG.maps.master) ? CFG.maps.master : [];
+    }
+    function mapNameOf(m) { return typeof m === 'string' ? m : (m && m.name) || ''; }
+    // 检测重名：同时扫描全部/车王/钻石排位/大师排位四个池，返回命中的池名数组（空数组=无重复）
+    function findDupMap(name) {
+        ensureMaps();
+        const hits = [];
+        if (CFG.maps.all.some(m => mapNameOf(m) === name)) hits.push('全部');
+        if (CFG.maps.rank.indexOf(name) > -1) hits.push('钻石排位');
+        if (CFG.maps.match.indexOf(name) > -1) hits.push('车王');
+        if (CFG.maps.master.indexOf(name) > -1) hits.push('大师排位');
+        return hits;
+    }
+    // 实时统计：直接按当前勾选状态刷新计数行，无需保存即生效
+    function updateMapCounts() {
+        let cAll = 0, cMatch = 0, cRank = 0, cMaster = 0;
+        document.querySelectorAll('#mapList .map-row').forEach(row => {
+            cAll++;
+            if (row.querySelector('.m-match').checked) cMatch++;
+            if (row.querySelector('.m-rank').checked) cRank++;
+            if (row.querySelector('.m-master').checked) cMaster++;
+        });
+        document.getElementById('mapCountAll').textContent = cAll;
+        document.getElementById('mapCountMatch').textContent = cMatch;
+        document.getElementById('mapCountRank').textContent = cRank;
+        document.getElementById('mapCountMaster').textContent = cMaster;
+    }
+    // 地图按名称 A-Z（中文拼音）排序；数字开头在前、英文在后
+    const pinyinCollator = new Intl.Collator('zh-Hans-CN', {sensitivity:'base', numeric:true});
+    function renderMaps() {
+        ensureMaps();
+        const box = document.getElementById('mapList');
+        const all = CFG.maps.all, rank = CFG.maps.rank, match = CFG.maps.match, master = CFG.maps.master;
+        box.innerHTML = '';
+        // 先整理为条目再按名称 A-Z 排序
+        const entries = all.map(m => ({
+            name: mapNameOf(m),
+            img: typeof m === 'string' ? '' : (m.img || ''),
+            kind: typeof m === 'string' ? 's' : 'o'
+        })).sort((a,b) => pinyinCollator.compare(a.name, b.name));
+        entries.forEach(e => {
+            const name = e.name;
+            const row = document.createElement('div');
+            row.className = 'map-row';
+            row.dataset.img = e.img;
+            row.dataset.kind = e.kind;
+            row.innerHTML = `
+                <span class="m-name">${escHtml(name)}</span>
+                <label><input type="checkbox" class="m-match" ${match.indexOf(name) > -1 ? 'checked' : ''}> 车王地图</label>
+                <label><input type="checkbox" class="m-rank" ${rank.indexOf(name) > -1 ? 'checked' : ''}> 钻石排位</label>
+                <label><input type="checkbox" class="m-master" ${master.indexOf(name) > -1 ? 'checked' : ''}> 大师排位</label>
+                <button class="m-del" data-name="${escHtml(name)}">删除</button>`;
+            row.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.addEventListener('change', () => { updateMapCounts(); applyMapFilter(); });
+            });
+            box.appendChild(row);
+        });
+        updateMapCounts();
+        document.querySelectorAll('.m-del').forEach(b => {
+            b.onclick = async () => {
+                const ok = await showConfirm('确定删除地图「' + b.dataset.name + '」？');
+                if (!ok) return;
+                ensureMaps();
+                const name = b.dataset.name;
+                CFG.maps.all    = CFG.maps.all.filter(m => mapNameOf(m) !== name);
+                CFG.maps.rank   = CFG.maps.rank.filter(n => n !== name);
+                CFG.maps.match  = CFG.maps.match.filter(n => n !== name);
+                CFG.maps.master = CFG.maps.master.filter(n => n !== name);
+                renderMaps();
+                showToast('已删除');
+            };
+        });
+        applyMapFilter();
+    }
+    // 地图池筛选状态（all/match/rank/master），与名称搜索叠加生效
+    let poolFilter = 'all';
+    const POOL_LABEL = {all:'全部', match:'车王地图', rank:'钻石排位', master:'大师排位'};
+    // 搜索筛选：按名称 + 地图池实时过滤地图列表
+    function applyMapFilter() {
+        const input = document.getElementById('mapSearch');
+        if (!input) return;
+        const q = input.value.trim().toLowerCase();
+        let visible = 0;
+        document.querySelectorAll('#mapList .map-row').forEach(row => {
+            const name = row.querySelector('.m-name').textContent.toLowerCase();
+            const nameHit = !q || name.indexOf(q) > -1;
+            let poolHit = true;
+            if (poolFilter === 'match') poolHit = row.querySelector('.m-match').checked;
+            else if (poolFilter === 'rank') poolHit = row.querySelector('.m-rank').checked;
+            else if (poolFilter === 'master') poolHit = row.querySelector('.m-master').checked;
+            const hit = nameHit && poolHit;
+            row.style.display = hit ? '' : 'none';
+            if (hit) visible++;
+        });
+        const total = document.querySelectorAll('#mapList .map-row').length;
+        const cnt = document.getElementById('mapSearchCount');
+        if (cnt) {
+            const parts = [];
+            if (poolFilter !== 'all') parts.push('当前查看「' + POOL_LABEL[poolFilter] + '」' + visible + ' 张');
+            if (q) parts.push('名称匹配 ' + visible + ' / ' + total);
+            cnt.textContent = parts.length ? ' ｜ ' + parts.join('，') : '';
+        }
+        // 高亮当前选中的地图池计数
+        document.querySelectorAll('.count-link').forEach(el => {
+            el.classList.toggle('active', el.dataset.pool === poolFilter);
+        });
+    }
+    // 点击计数行的地图池名称/数字 → 单独筛选该池（再点一次「全部」恢复）
+    document.querySelectorAll('.count-link').forEach(el => {
+        el.onclick = () => {
+            poolFilter = el.dataset.pool;
+            applyMapFilter();
+        };
+    });
+    document.getElementById('mapSearch').addEventListener('input', applyMapFilter);
+    document.getElementById('mapSearchClear').onclick = () => {
+        document.getElementById('mapSearch').value = '';
+        poolFilter = 'all';
+        applyMapFilter();
+    };
+    document.getElementById('addMapBtn').onclick = () => {
+        const name = document.getElementById('newMapName').value.trim();
+        const img = document.getElementById('newMapImg').value.trim();
+        if (!name) { showToast('请输入地图名称', true); return; }
+        ensureMaps();
+        const dup = findDupMap(name);
+        if (dup.length > 0) {
+            // 重复则停止添加
+            showToast('地图「' + name + '」已存在', true);
+            return;
+        }
+        CFG.maps.all.push(img ? {name: name, img: img} : name);
+        document.getElementById('newMapName').value = '';
+        document.getElementById('newMapImg').value = '';
+        renderMaps();
+        showToast('已添加「' + name + '」');
+    };
+
+    // ========== 设置 ==========
+    function renderSettings() {
+        document.getElementById('setTitle').value = CFG.homeTitle || '';
+        document.getElementById('setPwd').value = '';
+        const a = CFG.author || {};
+        document.getElementById('setAuthorQQ').value = a.qq || '';
+        document.getElementById('setAuthorName').value = a.name || '';
+        document.getElementById('setAuthorDesc').value = a.desc || '';
+    }
+
+    // ========== 保存 ==========
+    function saveAll() {
+        // 卡片
+        const cards = [];
+        document.querySelectorAll('#cardList .cfg-row').forEach(row => {
+            const c = row.querySelector('.c-name').value.trim();
+            if (!c) return;
+            cards.push({
+                key: row.dataset.key || c,
+                type: row.dataset.type || 'link',
+                mode: row.dataset.mode || '',
+                name: c,
+                icon: row.querySelector('.c-icon').value.trim(),
+                desc: row.querySelector('.c-desc').value.replace(/\r/g, ''),
+                link: row.querySelector('.c-link').value.trim(),
+                visible: row.querySelector('.c-vis').checked
+            });
+        });
+        // 地图
+        const all = [], rank = [], match = [], master = [];
+        document.querySelectorAll('#mapList .map-row').forEach(row => {
+            const name = row.querySelector('.m-name').textContent;
+            const img = row.dataset.img || '';
+            // 字符串条目原样写回；对象条目保留 img（含空图留空）
+            if (row.dataset.kind === 's') all.push(name);
+            else all.push({name: name, img: img});
+            if (row.querySelector('.m-rank').checked) rank.push(name);
+            if (row.querySelector('.m-match').checked) match.push(name);
+            if (row.querySelector('.m-master').checked) master.push(name);
+        });
+        // 设置
+        const title = document.getElementById('setTitle').value.trim();
+        const newPwd = document.getElementById('setPwd').value;
+        const author = {
+            qq: document.getElementById('setAuthorQQ').value.trim(),
+            name: document.getElementById('setAuthorName').value.trim(),
+            desc: document.getElementById('setAuthorDesc').value.trim()
+        };
+        const cfg = {
+            homeTitle: title || 'QQ飞车小工具',
+            adminPassword: newPwd ? newPwd : (CFG.adminPassword || 'admin888'),
+            cards: cards,
+            maps: {all: all, rank: rank, match: match, master: master},
+            author: author
+        };
+        localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+        CFG = loadCfg();
+        showToast('已保存，主页面刷新后生效');
+    }
+    document.getElementById('saveAll').onclick = saveAll;
+    document.getElementById('saveCards').onclick = saveAll;
+    document.getElementById('saveSettings').onclick = saveAll;
+    document.getElementById('saveAuthor').onclick = saveAll;
+
+    // ========== 导出 / 导入 / 恢复 ==========
+    document.getElementById('exportCfg').onclick = () => {
+        saveAll();
+        const raw = localStorage.getItem(CFG_KEY) || JSON.stringify(CFG);
+        const blob = new Blob([raw], {type: 'application/json;charset=utf-8'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'qqspeed_tool_config.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showToast('配置已导出');
+    };
+    document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+    document.getElementById('importFile').onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const data = JSON.parse(reader.result);
+                if (!data || typeof data !== 'object' || !Array.isArray(data.cards) || !data.maps) {
+                    showToast('文件格式不正确', true); return;
+                }
+                localStorage.setItem(CFG_KEY, JSON.stringify(data));
+                CFG = loadCfg();
+                renderAll();
+                showToast('导入成功');
+            } catch (err) {
+                showToast('导入失败：不是有效 JSON', true);
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    };
+    document.getElementById('resetCfg').onclick = async () => {
+        const ok = await showConfirm('确定恢复默认配置？所有自定义内容将被清空。');
+        if (!ok) return;
+        localStorage.removeItem(CFG_KEY);
+        CFG = loadCfg();
+        renderAll();
+        showToast('已恢复默认配置');
+    };
+
+    // ========== 渲染全部 ==========
+    function renderAll() {
+        renderCards();
+        renderMaps();
+        renderSettings();
+    }
+
+    // 会话内已登录则直接进入
+    if (sessionStorage.getItem(SESSION_KEY) === '1') {
+        loginView.classList.add('admin-hidden');
+        adminView.classList.remove('admin-hidden');
+        renderAll();
+    }
+    </script>
+</body>
+</html>
