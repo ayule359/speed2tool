@@ -1033,6 +1033,23 @@ a.mode-card .mode-name {
   transform: translateX(-50%) translateY(-3px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
+/* 回到顶部按钮 */
+#backTop {
+  position: fixed; right: 20px; bottom: 80px;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(19,194,242,0.9); color:#fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  transition: opacity .3s, transform .3s;
+  opacity: 0; transform: translateY(20px);
+  font-size: 20px; line-height: 1;
+}
+#backTop.show { opacity: 1; transform: translateY(0); }
+#backTop:hover { background: rgba(19,194,242,1); }
+@media (max-width: 768px) {
+  #backTop { right: 12px; bottom: 60px; width: 40px; height: 40px; }
+}
     </style>
 </head>
 <body>
@@ -1670,6 +1687,19 @@ const MAIN_CONTENT_HTML = `
   }
 })();
 
+    </script>
+    <div id="backTop" title="回到顶部">&#8679;</div>
+    <script>
+    (function(){
+      var btn = document.getElementById('backTop');
+      window.addEventListener('scroll', function(){
+        if(window.scrollY > 300) btn.classList.add('show');
+        else btn.classList.remove('show');
+      });
+      btn.addEventListener('click', function(){
+        window.scrollTo({top:0, behavior:'smooth'});
+      });
+    })();
     </script>
     <noscript><div style="text-align:center;padding:40px;color:#fff;font-size:16px;">请开启 JavaScript 以使用本工具</div></noscript>
 </body>
